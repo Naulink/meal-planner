@@ -1,14 +1,35 @@
 # Meal Planner
 
-A recipe tracking and meal planning tool designed to run locally in a home network.
+A **vibe coded** recipe tracking and meal planning tool designed to run locally in a home network.
 
 The application allows managing ingredients, recipes and meal plans with automatic macronutrient calculations.
 
 ## Features
-- CRUD ingredients with macronutrients
-- CRUD recipes
-- Person-specific calorie and macro targets
-- Daily and weekly meal planning by adding how many grams or ml the person eats on each day from a specific recipe and/ or ingredient
+- Ingredients
+  - CRUD with macronutrients and tags
+  - Search ingredients by name, filter by tags or nutrition categories
+- Recipes
+  - CRUD with ingredients (and their amount), tags, cooking instructions and other infos like cook time, number of persons or yield in % (e.g. 90% if 100g of ingredients lead to 90g in the end because water evaporated)
+  - Search recipes by name, filter by tags, nutrition categories or ingredients
+  - View the recipe on a detail page with all the infos from above + its nutrition score
+- Meal planner
+  - Add, edit or remove recipes or ingredients to your days
+  - View the daily nutrition score
+- Settings
+  - Manage persons (with their nutrition goals)
+  - Mange tags
+  - Backup and restore feature
+
+## Some impressions
+![](docs/assets/ingredients.png)
+
+### Recipe detail page (the overview looks similar to the ingredient list)
+![](docs/assets/recipe.png)
+<img src="docs/assets/edit_recipe.png" width=50% height=50%>
+
+![](docs/assets/planner.png)
+
+<img src="docs/assets/settings.png" width=50% height=50%>
 
 ## Tech Stack
 - Backend: Go (REST API)
