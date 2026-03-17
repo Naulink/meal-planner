@@ -1,0 +1,1197 @@
+openapi: 3.0.0
+info:
+  contact: {}
+  description: Meal planner backend
+  title: Meal Planner API
+  version: "1.0"
+paths:
+  /ingredients:
+    get:
+      description: Returns all ingredients, with optional search/filter params
+      parameters:
+        - description: Search by name
+          in: query
+          name: search
+          schema:
+            type: string
+        - description: Comma-separated tag ID filter (AND logic)
+          in: query
+          name: tags
+          schema:
+            type: string
+        - description: Minimum kcal per 100g
+          in: query
+          name: min_kcal
+          schema:
+            type: number
+        - description: Maximum kcal per 100g
+          in: query
+          name: max_kcal
+          schema:
+            type: number
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/internal_api.IngredientResponse"
+                type: array
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: List all ingredients
+      tags:
+        - ingredients
+    post:
+      requestBody:
+        $ref: "#/components/requestBodies/internal_api.CreateIngredientRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_api.IngredientResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Create ingredient
+      tags:
+        - ingredients
+  "/ingredients/{id}":
+    delete:
+      parameters:
+        - description: Ingredient ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          content:
+            "*/*":
+              schema:
+                type: string
+        "409":
+          description: Conflict
+          content:
+            "*/*":
+              schema:
+                type: string
+      summary: Delete ingredient
+      tags:
+        - ingredients
+    put:
+      parameters:
+        - description: Ingredient ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        $ref: "#/components/requestBodies/internal_api.CreateIngredientRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_api.IngredientResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Update ingredient
+      tags:
+        - ingredients
+  "/ingredients/{id}/image":
+    post:
+      parameters:
+        - description: Ingredient ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        $ref: "#/components/requestBodies/postIngredients_id_image"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+        "413":
+          description: Request Entity Too Large
+          content:
+            application/json:
+              schema:
+                type: string
+        "415":
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Upload ingredient image
+      tags:
+        - ingredients
+  /meal-plan:
+    delete:
+      responses:
+        "204":
+          description: No Content
+        "500":
+          description: Internal Server Error
+          content:
+            "*/*":
+              schema:
+                type: string
+      summary: Delete all meal plan entries (reset)
+      tags:
+        - meal-plan
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/internal_api.MealPlanEntryResponse"
+                type: array
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: List all meal plan entries
+      tags:
+        - meal-plan
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/internal_api.CreateMealPlanEntryRequest"
+        description: Entry
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_api.MealPlanEntryResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Add a meal plan entry
+      tags:
+        - meal-plan
+  "/meal-plan/{id}":
+    delete:
+      parameters:
+        - description: Entry ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          content:
+            "*/*":
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            "*/*":
+              schema:
+                type: string
+      summary: Remove a single meal plan entry
+      tags:
+        - meal-plan
+    put:
+      parameters:
+        - description: Entry ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/internal_api.UpdateMealPlanEntryRequest"
+        description: Entry
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_api.MealPlanEntryResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Update a meal plan entry's serving grams or amount
+      tags:
+        - meal-plan
+  "/meal-plan/day/{dayIndex}":
+    delete:
+      parameters:
+        - description: Day Index (>= 1)
+          in: path
+          name: dayIndex
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          content:
+            "*/*":
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            "*/*":
+              schema:
+                type: string
+      summary: Delete all entries for a specific day and reindex subsequent days
+      tags:
+        - meal-plan
+  /persons:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/internal_api.PersonResponse"
+                type: array
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: List all persons
+      tags:
+        - persons
+    post:
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/internal_api.CreatePersonRequest"
+        description: Person
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_api.PersonResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Create a person
+      tags:
+        - persons
+  "/persons/{id}":
+    delete:
+      parameters:
+        - description: Person ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          content:
+            "*/*":
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            "*/*":
+              schema:
+                type: string
+      summary: Delete a person
+      tags:
+        - persons
+    put:
+      parameters:
+        - description: Person ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/internal_api.UpdatePersonRequest"
+        description: Person
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_api.PersonResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Update a person
+      tags:
+        - persons
+  "/persons/{id}/settings":
+    get:
+      parameters:
+        - description: Person ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_api.PersonSettingsResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Get person's nutritional goals
+      tags:
+        - persons
+    put:
+      parameters:
+        - description: Person ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/internal_api.UpdatePersonSettingsRequest"
+        description: Settings
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_api.PersonSettingsResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Update person's nutritional goals
+      tags:
+        - persons
+  /recipes:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/internal_api.RecipeResponse"
+                type: array
+      summary: List all recipes
+      tags:
+        - recipes
+    post:
+      requestBody:
+        $ref: "#/components/requestBodies/internal_api.CreateRecipeRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_api.RecipeResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Create recipe
+      tags:
+        - recipes
+  "/recipes/{id}":
+    delete:
+      parameters:
+        - description: Recipe ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          content:
+            "*/*":
+              schema:
+                type: string
+      summary: Delete recipe
+      tags:
+        - recipes
+    get:
+      parameters:
+        - description: Recipe ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_api.RecipeResponse"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Get recipe by ID
+      tags:
+        - recipes
+    put:
+      parameters:
+        - description: Recipe ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        $ref: "#/components/requestBodies/internal_api.CreateRecipeRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_api.RecipeResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Update recipe
+      tags:
+        - recipes
+  "/recipes/{id}/image":
+    post:
+      parameters:
+        - description: Recipe ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        $ref: "#/components/requestBodies/postIngredients_id_image"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                additionalProperties:
+                  type: string
+                type: object
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+        "413":
+          description: Request Entity Too Large
+          content:
+            application/json:
+              schema:
+                type: string
+        "415":
+          description: Unsupported Media Type
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Upload recipe image
+      tags:
+        - recipes
+  /tags:
+    get:
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/internal_api.TagResponse"
+                type: array
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: List all tags
+      tags:
+        - tags
+    post:
+      requestBody:
+        $ref: "#/components/requestBodies/internal_api.CreateTagRequest"
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_api.TagResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "422":
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Create tag
+      tags:
+        - tags
+  "/tags/{id}":
+    delete:
+      parameters:
+        - description: Tag ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          content:
+            "*/*":
+              schema:
+                type: string
+        "409":
+          description: Conflict
+          content:
+            "*/*":
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            "*/*":
+              schema:
+                type: string
+      summary: Delete tag
+      tags:
+        - tags
+    put:
+      parameters:
+        - description: Tag ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        $ref: "#/components/requestBodies/internal_api.CreateTagRequest"
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/internal_api.TagResponse"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+        "422":
+          description: Unprocessable Entity
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Update tag
+      tags:
+        - tags
+servers:
+  - url: //localhost:8080
+components:
+  requestBodies:
+    internal_api.CreateIngredientRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/internal_api.CreateIngredientRequest"
+      description: Ingredient
+      required: true
+    internal_api.CreateRecipeRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/internal_api.CreateRecipeRequest"
+      description: Recipe
+      required: true
+    postIngredients_id_image:
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            properties:
+              image:
+                description: Image file
+                type: string
+                format: binary
+            required:
+              - image
+      required: true
+    internal_api.CreateTagRequest:
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/internal_api.CreateTagRequest"
+      description: Tag
+      required: true
+  schemas:
+    internal_api.CreateIngredientRequest:
+      properties:
+        carbs_per_100:
+          type: number
+        fat_per_100:
+          type: number
+        kcal_per_100:
+          type: number
+        name:
+          type: string
+        nutrition_basis:
+          type: string
+        pieces_allowed:
+          type: boolean
+        protein_per_100:
+          type: number
+        sugar_per_100:
+          type: number
+        tag_ids:
+          items:
+            type: integer
+          type: array
+        unsaturated_fat_per_100:
+          type: number
+        weight_per_unit:
+          type: integer
+      type: object
+    internal_api.CreateMealPlanEntryRequest:
+      properties:
+        amount:
+          type: number
+        day_index:
+          type: integer
+        ingredient_id:
+          type: integer
+        person_id:
+          type: integer
+        recipe_id:
+          type: integer
+        serving_grams:
+          type: number
+        unit:
+          type: string
+      type: object
+    internal_api.CreatePersonRequest:
+      properties:
+        age:
+          type: integer
+        gender:
+          type: string
+        name:
+          type: string
+      type: object
+    internal_api.CreateRecipeRequest:
+      properties:
+        cook_time_minutes:
+          type: integer
+        description:
+          type: string
+        ingredients:
+          items:
+            $ref: "#/components/schemas/internal_api.RecipeIngredientRequest"
+          type: array
+        name:
+          type: string
+        persons:
+          type: integer
+        steps:
+          type: string
+        tag_ids:
+          items:
+            type: integer
+          type: array
+      type: object
+    internal_api.CreateTagRequest:
+      properties:
+        color:
+          type: string
+        description:
+          type: string
+        name:
+          type: string
+        show_on_cards:
+          type: boolean
+      type: object
+    internal_api.IngredientInEntry:
+      properties:
+        carbs_per_100:
+          type: number
+        fat_per_100:
+          type: number
+        id:
+          type: integer
+        image_path:
+          type: string
+        kcal_per_100:
+          type: number
+        name:
+          type: string
+        protein_per_100:
+          type: number
+        sugar_per_100:
+          type: number
+        unsaturated_fat_per_100:
+          type: number
+        weight_per_unit:
+          type: integer
+      type: object
+    internal_api.IngredientResponse:
+      properties:
+        carbs_per_100:
+          type: number
+        fat_per_100:
+          type: number
+        id:
+          type: integer
+        image_url:
+          type: string
+        kcal_per_100:
+          type: number
+        name:
+          type: string
+        nutrition_basis:
+          type: string
+        pieces_allowed:
+          type: boolean
+        protein_per_100:
+          type: number
+        sugar_per_100:
+          type: number
+        tags:
+          items:
+            $ref: "#/components/schemas/internal_api.TagResponse"
+          type: array
+        unsaturated_fat_per_100:
+          type: number
+        weight_per_unit:
+          type: integer
+      type: object
+    internal_api.MealPlanEntryResponse:
+      properties:
+        amount:
+          type: number
+        created_at:
+          type: string
+        day_index:
+          type: integer
+        id:
+          type: integer
+        ingredient:
+          $ref: "#/components/schemas/internal_api.IngredientInEntry"
+        person_id:
+          type: integer
+        recipe_id:
+          type: integer
+        serving_grams:
+          type: number
+        unit:
+          type: string
+      type: object
+    internal_api.PersonResponse:
+      properties:
+        age:
+          type: integer
+        created_at:
+          type: string
+        gender:
+          type: string
+        id:
+          type: integer
+        name:
+          type: string
+        settings:
+          $ref: "#/components/schemas/internal_api.PersonSettingsResponse"
+      type: object
+    internal_api.PersonSettingsResponse:
+      properties:
+        person_id:
+          type: integer
+        target_carbs:
+          type: integer
+        target_fat:
+          type: integer
+        target_kcal:
+          type: integer
+        target_protein:
+          type: integer
+      type: object
+    internal_api.RecipeIngredientRequest:
+      properties:
+        amount:
+          type: number
+        ingredient_id:
+          type: integer
+        unit:
+          type: string
+      type: object
+    internal_api.RecipeIngredientResponse:
+      properties:
+        amount:
+          type: number
+        carbs_per_100:
+          type: number
+        fat_per_100:
+          type: number
+        ingredient_id:
+          type: integer
+        kcal_per_100:
+          type: number
+        name:
+          type: string
+        nutrition_basis:
+          type: string
+        pieces_allowed:
+          type: boolean
+        protein_per_100:
+          type: number
+        sugar_per_100:
+          type: number
+        tags:
+          items:
+            $ref: "#/components/schemas/internal_api.TagResponse"
+          type: array
+        unit:
+          type: string
+        unsaturated_fat_per_100:
+          type: number
+        weight_per_unit:
+          type: integer
+      type: object
+    internal_api.RecipeResponse:
+      properties:
+        cook_time_minutes:
+          type: integer
+        description:
+          type: string
+        id:
+          type: integer
+        image_url:
+          type: string
+        ingredient_count:
+          type: integer
+        ingredients:
+          items:
+            $ref: "#/components/schemas/internal_api.RecipeIngredientResponse"
+          type: array
+        name:
+          type: string
+        persons:
+          type: integer
+        steps:
+          type: string
+        tags:
+          items:
+            $ref: "#/components/schemas/internal_api.TagResponse"
+          type: array
+      type: object
+    internal_api.TagResponse:
+      properties:
+        color:
+          type: string
+        description:
+          type: string
+        id:
+          type: integer
+        name:
+          type: string
+        show_on_cards:
+          type: boolean
+      type: object
+    internal_api.UpdateMealPlanEntryRequest:
+      properties:
+        amount:
+          type: number
+        serving_grams:
+          type: number
+      type: object
+    internal_api.UpdatePersonRequest:
+      properties:
+        age:
+          type: integer
+        gender:
+          type: string
+        name:
+          type: string
+      type: object
+    internal_api.UpdatePersonSettingsRequest:
+      properties:
+        target_carbs:
+          type: integer
+        target_fat:
+          type: integer
+        target_kcal:
+          type: integer
+        target_protein:
+          type: integer
+      type: object
