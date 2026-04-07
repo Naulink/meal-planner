@@ -55,9 +55,11 @@ export type MealPlanIngredient = {
   weight_per_unit: number | null
 }
 
+export type MealPlanEntryIngredient = Required<Schemas['internal_api.MealPlanEntryIngredientResponse']>
+
 export type MealPlanEntry = Omit<
   Required<Schemas['internal_api.MealPlanEntryResponse']>,
-  'ingredient' | 'ingredient_id' | 'recipe_id' | 'serving_grams' | 'amount' | 'unit'
+  'ingredient' | 'ingredient_id' | 'recipe_id' | 'serving_grams' | 'amount' | 'unit' | 'customized_ingredients'
 > & {
   recipe_id: number | null
   serving_grams: number | null
@@ -65,6 +67,7 @@ export type MealPlanEntry = Omit<
   amount: number | null
   unit: string | null
   ingredient?: MealPlanIngredient
+  customized_ingredients?: MealPlanEntryIngredient[]
 }
 
 export type CreateMealPlanEntryPayload = Schemas['internal_api.CreateMealPlanEntryRequest']

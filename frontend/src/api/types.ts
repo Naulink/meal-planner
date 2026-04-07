@@ -533,6 +533,257 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/meal-plan/{id}/customize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Snapshot recipe ingredients for customization */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Entry ID */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["internal_api.MealPlanEntryIngredientResponse"][];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string;
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string;
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/meal-plan/{id}/ingredients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Add ingredient to a customized entry */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Entry ID */
+                    id: number;
+                };
+                cookie?: never;
+            };
+            /** @description Ingredient data */
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["internal_api.AddEntryIngredientRequest"];
+                };
+            };
+            responses: {
+                /** @description Created */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["internal_api.MealPlanEntryIngredientResponse"][];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string;
+                    };
+                };
+                /** @description Not Found */
+                404: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string;
+                    };
+                };
+                /** @description Conflict */
+                409: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string;
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string;
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/meal-plan/{id}/ingredients/{ingredientId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Update an override ingredient's amount and unit */
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Entry ID */
+                    id: number;
+                    /** @description Ingredient ID */
+                    ingredientId: number;
+                };
+                cookie?: never;
+            };
+            /** @description Update data */
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["internal_api.UpdateEntryIngredientRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["internal_api.MealPlanEntryIngredientResponse"][];
+                    };
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string;
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": string;
+                    };
+                };
+            };
+        };
+        post?: never;
+        /** Remove an override ingredient */
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description Entry ID */
+                    id: number;
+                    /** @description Ingredient ID */
+                    ingredientId: number;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                /** @description Bad Request */
+                400: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "*/*": string;
+                    };
+                };
+                /** @description Internal Server Error */
+                500: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "*/*": string;
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/meal-plan/day/{dayIndex}": {
         parameters: {
             query?: never;
@@ -1405,6 +1656,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        "internal_api.AddEntryIngredientRequest": {
+            amount?: number;
+            ingredient_id?: number;
+            unit?: string;
+        };
         "internal_api.CreateIngredientRequest": {
             carbs_per_100?: number;
             fat_per_100?: number;
@@ -1475,9 +1731,26 @@ export interface components {
             unsaturated_fat_per_100?: number;
             weight_per_unit?: number;
         };
+        "internal_api.MealPlanEntryIngredientResponse": {
+            amount?: number;
+            carbs_per_100?: number;
+            fat_per_100?: number;
+            image_path?: string;
+            ingredient_id?: number;
+            kcal_per_100?: number;
+            name?: string;
+            nutrition_basis?: string;
+            pieces_allowed?: boolean;
+            protein_per_100?: number;
+            sugar_per_100?: number;
+            unit?: string;
+            unsaturated_fat_per_100?: number;
+            weight_per_unit?: number;
+        };
         "internal_api.MealPlanEntryResponse": {
             amount?: number;
             created_at?: string;
+            customized_ingredients?: components["schemas"]["internal_api.MealPlanEntryIngredientResponse"][];
             day_index?: number;
             id?: number;
             ingredient?: components["schemas"]["internal_api.IngredientInEntry"];
@@ -1541,6 +1814,10 @@ export interface components {
             id?: number;
             name?: string;
             show_on_cards?: boolean;
+        };
+        "internal_api.UpdateEntryIngredientRequest": {
+            amount?: number;
+            unit?: string;
         };
         "internal_api.UpdateMealPlanEntryRequest": {
             amount?: number;

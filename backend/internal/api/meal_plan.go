@@ -41,16 +41,45 @@ type IngredientInEntry struct {
 	WeightPerUnit        *int32  `json:"weight_per_unit"`
 }
 
+type MealPlanEntryIngredientResponse struct {
+	IngredientID         int64   `json:"ingredient_id"`
+	Name                 string  `json:"name"`
+	Amount               float64 `json:"amount"`
+	Unit                 string  `json:"unit"`
+	KcalPer100           float64 `json:"kcal_per_100"`
+	ProteinPer100        float64 `json:"protein_per_100"`
+	CarbsPer100          float64 `json:"carbs_per_100"`
+	FatPer100            float64 `json:"fat_per_100"`
+	UnsaturatedFatPer100 float64 `json:"unsaturated_fat_per_100"`
+	SugarPer100          float64 `json:"sugar_per_100"`
+	NutritionBasis       string  `json:"nutrition_basis"`
+	PiecesAllowed        bool    `json:"pieces_allowed"`
+	WeightPerUnit        *int32  `json:"weight_per_unit"`
+	ImagePath            *string `json:"image_path"`
+}
+
 type MealPlanEntryResponse struct {
-	ID           int64              `json:"id"`
-	PersonID     int64              `json:"person_id"`
-	DayIndex     int32              `json:"day_index"`
-	RecipeID     *int64             `json:"recipe_id"`
-	ServingGrams *float64           `json:"serving_grams"`
-	Ingredient   *IngredientInEntry `json:"ingredient"`
-	Amount       *float64           `json:"amount"`
-	Unit         *string            `json:"unit"`
-	CreatedAt    string             `json:"created_at"`
+	ID                    int64                            `json:"id"`
+	PersonID              int64                            `json:"person_id"`
+	DayIndex              int32                            `json:"day_index"`
+	RecipeID              *int64                           `json:"recipe_id"`
+	ServingGrams          *float64                         `json:"serving_grams"`
+	Ingredient            *IngredientInEntry               `json:"ingredient"`
+	Amount                *float64                         `json:"amount"`
+	Unit                  *string                          `json:"unit"`
+	CreatedAt             string                           `json:"created_at"`
+	CustomizedIngredients []MealPlanEntryIngredientResponse `json:"customized_ingredients,omitempty"`
+}
+
+type AddEntryIngredientRequest struct {
+	IngredientID int64   `json:"ingredient_id"`
+	Amount       float64 `json:"amount"`
+	Unit         string  `json:"unit"`
+}
+
+type UpdateEntryIngredientRequest struct {
+	Amount float64 `json:"amount"`
+	Unit   string  `json:"unit"`
 }
 
 func toMealPlanEntryResponse(e db.MealPlanEntry) MealPlanEntryResponse {
@@ -158,8 +187,43 @@ ORDER BY mp.person_id ASC, mp.day_index ASC, mp.created_at ASC`
 		resp = []MealPlanEntryResponse{}
 	}
 
+	// Fetch all override ingredients and group by entry ID
+	overrides, err := h.queries.ListMealPlanEntryIngredients(r.Context())
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	overrideMap := make(map[int64][]MealPlanEntryIngredientResponse)
+	for _, o := range overrides {
+		overrideMap[o.MealPlanEntryID] = append(overrideMap[o.MealPlanEntryID], toEntryIngredientResponse(o))
+	}
+	for i := range resp {
+		if ings, ok := overrideMap[resp[i].ID]; ok {
+			resp[i].CustomizedIngredients = ings
+		}
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resp)
+}
+
+func toEntryIngredientResponse(o db.ListMealPlanEntryIngredientsRow) MealPlanEntryIngredientResponse {
+	return MealPlanEntryIngredientResponse{
+		IngredientID:         o.IngredientID,
+		Name:                 o.Name,
+		Amount:               o.Amount,
+		Unit:                 o.Unit,
+		KcalPer100:           o.KcalPer100,
+		ProteinPer100:        o.ProteinPer100,
+		CarbsPer100:          o.CarbsPer100,
+		FatPer100:            o.FatPer100,
+		UnsaturatedFatPer100: o.UnsaturatedFatPer100,
+		SugarPer100:          o.SugarPer100,
+		NutritionBasis:       o.NutritionBasis,
+		PiecesAllowed:        o.PiecesAllowed,
+		WeightPerUnit:        o.WeightPerUnit,
+		ImagePath:            o.ImagePath,
+	}
 }
 
 func derefFloat64(p *float64) float64 {
@@ -389,6 +453,274 @@ func (h *Handler) DeleteMealPlanDay(w http.ResponseWriter, r *http.Request) {
 // @Router /meal-plan [delete]
 func (h *Handler) DeleteAllMealPlanEntries(w http.ResponseWriter, r *http.Request) {
 	if err := h.queries.DeleteAllMealPlanEntries(r.Context()); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// fetchEntryOverrides fetches all overrides for a given entry and returns them as a response slice.
+func (h *Handler) fetchEntryOverrides(ctx context.Context, entryID int64) ([]MealPlanEntryIngredientResponse, error) {
+	all, err := h.queries.ListMealPlanEntryIngredients(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var result []MealPlanEntryIngredientResponse
+	for _, o := range all {
+		if o.MealPlanEntryID == entryID {
+			result = append(result, toEntryIngredientResponse(o))
+		}
+	}
+	if result == nil {
+		result = []MealPlanEntryIngredientResponse{}
+	}
+	return result, nil
+}
+
+// CustomizeMealPlanEntry godoc
+// @Summary Snapshot recipe ingredients for customization
+// @Tags meal-plan
+// @Produce json
+// @Param id path int true "Entry ID"
+// @Success 200 {array} MealPlanEntryIngredientResponse
+// @Failure 400 {string} string
+// @Failure 404 {string} string
+// @Failure 500 {string} string
+// @Router /meal-plan/{id}/customize [post]
+func (h *Handler) CustomizeMealPlanEntry(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	// Fetch the entry
+	var recipeID *int64
+	err = h.pool.QueryRow(r.Context(),
+		"SELECT recipe_id FROM meal_plan_entries WHERE id = $1", id).Scan(&recipeID)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "entry not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if recipeID == nil {
+		http.Error(w, "entry is not a recipe entry", http.StatusBadRequest)
+		return
+	}
+
+	// Check if already customized
+	customized, err := h.queries.HasMealPlanEntryIngredients(r.Context(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	if !customized {
+		// Snapshot recipe ingredients
+		err = h.queries.CreateMealPlanEntryIngredients(r.Context(), db.CreateMealPlanEntryIngredientsParams{
+			MealPlanEntryID: id,
+			RecipeID:        *recipeID,
+		})
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+
+	result, err := h.fetchEntryOverrides(r.Context(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// AddEntryIngredient godoc
+// @Summary Add ingredient to a customized entry
+// @Tags meal-plan
+// @Accept json
+// @Produce json
+// @Param id path int true "Entry ID"
+// @Param body body AddEntryIngredientRequest true "Ingredient data"
+// @Success 201 {array} MealPlanEntryIngredientResponse
+// @Failure 400 {string} string
+// @Failure 404 {string} string
+// @Failure 409 {string} string
+// @Failure 500 {string} string
+// @Router /meal-plan/{id}/ingredients [post]
+func (h *Handler) AddEntryIngredient(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+
+	var req AddEntryIngredientRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+	if req.Amount <= 0 {
+		http.Error(w, "amount must be > 0", http.StatusBadRequest)
+		return
+	}
+	if req.Unit != "g" && req.Unit != "ml" && req.Unit != "pcs" {
+		http.Error(w, "unit must be one of: g, ml, pcs", http.StatusBadRequest)
+		return
+	}
+
+	// Verify entry exists and is customized
+	customized, err := h.queries.HasMealPlanEntryIngredients(r.Context(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if !customized {
+		http.Error(w, "entry is not customized; call customize first", http.StatusBadRequest)
+		return
+	}
+
+	// Validate unit compatibility with ingredient
+	var nutritionBasis string
+	var piecesAllowed bool
+	err = h.pool.QueryRow(r.Context(),
+		"SELECT nutrition_basis, pieces_allowed FROM ingredients WHERE id = $1", req.IngredientID).
+		Scan(&nutritionBasis, &piecesAllowed)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			http.Error(w, "ingredient not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	if req.Unit == "pcs" && !piecesAllowed {
+		http.Error(w, "unit 'pcs' not allowed for this ingredient", http.StatusBadRequest)
+		return
+	}
+	if req.Unit != "pcs" && req.Unit != nutritionBasis {
+		http.Error(w, "unit must match ingredient's nutrition_basis or be 'pcs'", http.StatusBadRequest)
+		return
+	}
+
+	err = h.queries.AddMealPlanEntryIngredient(r.Context(), db.AddMealPlanEntryIngredientParams{
+		MealPlanEntryID: id,
+		IngredientID:    req.IngredientID,
+		Amount:          req.Amount,
+		Unit:            req.Unit,
+	})
+	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			http.Error(w, "ingredient already exists in this entry", http.StatusConflict)
+			return
+		}
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	result, err := h.fetchEntryOverrides(r.Context(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(result)
+}
+
+// UpdateEntryIngredient godoc
+// @Summary Update an override ingredient's amount and unit
+// @Tags meal-plan
+// @Accept json
+// @Produce json
+// @Param id path int true "Entry ID"
+// @Param ingredientId path int true "Ingredient ID"
+// @Param body body UpdateEntryIngredientRequest true "Update data"
+// @Success 200 {array} MealPlanEntryIngredientResponse
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /meal-plan/{id}/ingredients/{ingredientId} [put]
+func (h *Handler) UpdateEntryIngredient(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	ingredientID, err := strconv.ParseInt(r.PathValue("ingredientId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid ingredientId", http.StatusBadRequest)
+		return
+	}
+
+	var req UpdateEntryIngredientRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid body", http.StatusBadRequest)
+		return
+	}
+	if req.Amount <= 0 {
+		http.Error(w, "amount must be > 0", http.StatusBadRequest)
+		return
+	}
+	if req.Unit != "g" && req.Unit != "ml" && req.Unit != "pcs" {
+		http.Error(w, "unit must be one of: g, ml, pcs", http.StatusBadRequest)
+		return
+	}
+
+	err = h.queries.UpdateMealPlanEntryIngredient(r.Context(), db.UpdateMealPlanEntryIngredientParams{
+		Amount:          req.Amount,
+		Unit:            req.Unit,
+		MealPlanEntryID: id,
+		IngredientID:    ingredientID,
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	result, err := h.fetchEntryOverrides(r.Context(), id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
+}
+
+// DeleteEntryIngredient godoc
+// @Summary Remove an override ingredient
+// @Tags meal-plan
+// @Param id path int true "Entry ID"
+// @Param ingredientId path int true "Ingredient ID"
+// @Success 204
+// @Failure 400 {string} string
+// @Failure 500 {string} string
+// @Router /meal-plan/{id}/ingredients/{ingredientId} [delete]
+func (h *Handler) DeleteEntryIngredient(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	ingredientID, err := strconv.ParseInt(r.PathValue("ingredientId"), 10, 64)
+	if err != nil {
+		http.Error(w, "invalid ingredientId", http.StatusBadRequest)
+		return
+	}
+
+	err = h.queries.DeleteMealPlanEntryIngredient(r.Context(), db.DeleteMealPlanEntryIngredientParams{
+		MealPlanEntryID: id,
+		IngredientID:    ingredientID,
+	})
+	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

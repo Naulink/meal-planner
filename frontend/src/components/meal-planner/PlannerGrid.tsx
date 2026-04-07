@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { PlannerCell } from './PlannerCell'
 import { PersonTabs } from './PersonTabs'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import type { Person, MealPlanEntry, Recipe, Ingredient } from '@/types'
+import type { Person, MealPlanEntry, MealPlanEntryIngredient, Recipe, Ingredient } from '@/types'
 
 type PlanMap = Record<number, Record<number, MealPlanEntry[]>>
 
@@ -20,6 +20,10 @@ interface PlannerGridProps {
   onRemove: (id: number) => Promise<void>
   onRemoveDay: (dayIndex: number) => Promise<void>
   onAddIngredient: (personId: number, dayIndex: number, ingredientId: number, amount: number, unit: string) => Promise<void>
+  onCustomizeEntry: (id: number) => Promise<MealPlanEntryIngredient[]>
+  onAddEntryIngredient: (entryId: number, data: { ingredient_id: number; amount: number; unit: string }) => Promise<void>
+  onUpdateEntryIngredient: (entryId: number, ingredientId: number, data: { amount: number; unit: string }) => Promise<void>
+  onRemoveEntryIngredient: (entryId: number, ingredientId: number) => Promise<void>
 }
 
 function DayHeaderCell({ dayIndex, onRemove, disabled }: { dayIndex: number; onRemove: () => void; disabled: boolean }) {
@@ -39,7 +43,7 @@ function DayHeaderCell({ dayIndex, onRemove, disabled }: { dayIndex: number; onR
   )
 }
 
-export function PlannerGrid({ persons, dayCount, planMap, recipes, ingredients, onAdd, onUpdate, onRemove, onRemoveDay, onAddIngredient }: PlannerGridProps) {
+export function PlannerGrid({ persons, dayCount, planMap, recipes, ingredients, onAdd, onUpdate, onRemove, onRemoveDay, onAddIngredient, onCustomizeEntry, onAddEntryIngredient, onUpdateEntryIngredient, onRemoveEntryIngredient }: PlannerGridProps) {
   const isMobile = useIsMobile()
   const [selectedPersonIndex, setSelectedPersonIndex] = useState(0)
 
@@ -76,6 +80,10 @@ export function PlannerGrid({ persons, dayCount, planMap, recipes, ingredients, 
                 onUpdate={onUpdate}
                 onRemove={onRemove}
                 onAddIngredient={onAddIngredient}
+                onCustomizeEntry={onCustomizeEntry}
+                onAddEntryIngredient={onAddEntryIngredient}
+                onUpdateEntryIngredient={onUpdateEntryIngredient}
+                onRemoveEntryIngredient={onRemoveEntryIngredient}
               />
             </Fragment>
           ))}
@@ -120,6 +128,10 @@ export function PlannerGrid({ persons, dayCount, planMap, recipes, ingredients, 
               onUpdate={onUpdate}
               onRemove={onRemove}
               onAddIngredient={onAddIngredient}
+              onCustomizeEntry={onCustomizeEntry}
+              onAddEntryIngredient={onAddEntryIngredient}
+              onUpdateEntryIngredient={onUpdateEntryIngredient}
+              onRemoveEntryIngredient={onRemoveEntryIngredient}
             />
           ))}
         </Fragment>

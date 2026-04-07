@@ -14,6 +14,9 @@ interface RecipePickerProps {
   ingredients: Ingredient[]
   onSelect: (recipe: Recipe) => void
   onSelectIngredient: (ingredient: Ingredient) => void
+  triggerLabel?: string
+  triggerVariant?: 'default' | 'secondary' | 'ghost' | 'outline' | 'destructive' | 'link'
+  triggerClassName?: string
 }
 
 
@@ -27,7 +30,7 @@ function getRecipeTags(recipe: Recipe): Tag[] {
   return tags
 }
 
-export function RecipePicker({ recipes, ingredients, onSelect, onSelectIngredient }: RecipePickerProps) {
+export function RecipePicker({ recipes, ingredients, onSelect, onSelectIngredient, triggerLabel, triggerVariant, triggerClassName }: RecipePickerProps) {
   const [open, setOpen] = useState(false)
   const [search, setSearch] = useState('')
   const [allTags, setAllTags] = useState<Tag[]>([])
@@ -73,9 +76,9 @@ export function RecipePicker({ recipes, ingredients, onSelect, onSelectIngredien
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="secondary" className="w-full gap-2">
+        <Button variant={triggerVariant ?? 'secondary'} className={triggerClassName ?? 'w-full gap-2'}>
           <Plus className="h-4 w-4" />
-          Add Item
+          {triggerLabel ?? 'Add Item'}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[min(500px,calc(100vw-2rem))] p-0" align="start">

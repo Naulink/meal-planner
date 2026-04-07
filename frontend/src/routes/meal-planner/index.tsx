@@ -19,7 +19,10 @@ function MealPlannerPage() {
   const { recipes, fetchRecipes } = useRecipes()
   const { ingredients, fetchIngredients } = useIngredients()
   const { persons } = usePersonsContext()
-  const { entries, fetchEntries, addEntry, updateEntry, removeEntry, removeDay, resetAll } = useMealPlan()
+  const {
+    entries, fetchEntries, addEntry, updateEntry, removeEntry, removeDay, resetAll,
+    customizeEntry, addEntryIngredient, updateEntryIngredient, removeEntryIngredient,
+  } = useMealPlan()
   const [dayCount, setDayCount] = useState(() => {
     const saved = localStorage.getItem('mealPlanner.dayCount')
     return saved ? Math.max(1, parseInt(saved)) : 1
@@ -128,6 +131,10 @@ function MealPlannerPage() {
           onRemove={handleRemove}
           onRemoveDay={handleRemoveDay}
           onAddIngredient={handleAddIngredient}
+          onCustomizeEntry={customizeEntry}
+          onAddEntryIngredient={addEntryIngredient}
+          onUpdateEntryIngredient={updateEntryIngredient}
+          onRemoveEntryIngredient={removeEntryIngredient}
         />
       )}
     </div>

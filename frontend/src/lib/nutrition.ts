@@ -1,4 +1,4 @@
-import type { Recipe } from '@/types'
+import type { Recipe, MealPlanEntryIngredient } from '@/types'
 
 export interface Macros {
   kcal: number
@@ -15,7 +15,6 @@ export interface PlannedMeal {
 }
 
 export function calcServingMacros(recipe: Recipe, servingGrams: number): Macros {
-  // Sum each ingredient's contribution per gram of recipe
   let totalKcal = 0
   let totalProtein = 0
   let totalCarbs = 0
@@ -23,17 +22,11 @@ export function calcServingMacros(recipe: Recipe, servingGrams: number): Macros 
   let totalUnsaturatedFat = 0
   let totalSugar = 0
 
-  // First calculate total recipe weight from ingredients
-  // Each ingredient amount is in its unit (g/ml/pieces)
-  // We sum all ingredients' macro contributions
   for (const ing of recipe.ingredients) {
-    // amount is in ing.unit (g, ml, or pieces)
-    // for pieces: multiply by weight_per_unit to get grams
     let amountInBase = ing.amount
     if (ing.unit === 'pieces' && ing.weight_per_unit) {
       amountInBase = ing.amount * ing.weight_per_unit
     }
-    // macros per 100g/ml → per unit amount
     totalKcal += (ing.kcal_per_100 * amountInBase) / 100
     totalProtein += (ing.protein_per_100 * amountInBase) / 100
     totalCarbs += (ing.carbs_per_100 * amountInBase) / 100
@@ -42,7 +35,6 @@ export function calcServingMacros(recipe: Recipe, servingGrams: number): Macros 
     totalSugar += (ing.sugar_per_100 * amountInBase) / 100
   }
 
-  // Calculate recipe total weight (grams)
   const totalWeight = recipe.ingredients.reduce((sum, ing) => {
     let amountInBase = ing.amount
     if (ing.unit === 'pieces' && ing.weight_per_unit) {
@@ -51,13 +43,64 @@ export function calcServingMacros(recipe: Recipe, servingGrams: number): Macros 
     return sum + amountInBase
   }, 0)
 
-  if (totalWeight === 0) {
+  const cookedTotalWeight = totalWeight * (recipe.yield ?? 100) / 100
+
+  if (cookedTotalWeight === 0) {
     return { kcal: 0, protein: 0, carbs: 0, fat: 0, unsaturated_fat: 0, sugar: 0 }
   }
 
-  const yieldFactor = (recipe.yield ?? 100) / 100
-  const rawEquivalentGrams = servingGrams / yieldFactor
-  const scale = rawEquivalentGrams / totalWeight
+  const scale = servingGrams / cookedTotalWeight
+  const r = (n: number) => Math.round(n * 10) / 10
+  return {
+    kcal: r(totalKcal * scale),
+    protein: r(totalProtein * scale),
+    carbs: r(totalCarbs * scale),
+    fat: r(totalFat * scale),
+    unsaturated_fat: r(totalUnsaturatedFat * scale),
+    sugar: r(totalSugar * scale),
+  }
+}
+
+export function calcCustomizedServingMacros(
+  recipe: Recipe,
+  servingGrams: number,
+  customizedIngredients: MealPlanEntryIngredient[]
+): Macros {
+  let totalKcal = 0
+  let totalProtein = 0
+  let totalCarbs = 0
+  let totalFat = 0
+  let totalUnsaturatedFat = 0
+  let totalSugar = 0
+
+  for (const ing of customizedIngredients) {
+    let amountInBase = ing.amount
+    if (ing.unit === 'pcs' && ing.weight_per_unit) {
+      amountInBase = ing.amount * ing.weight_per_unit
+    }
+    totalKcal += (ing.kcal_per_100 * amountInBase) / 100
+    totalProtein += (ing.protein_per_100 * amountInBase) / 100
+    totalCarbs += (ing.carbs_per_100 * amountInBase) / 100
+    totalFat += (ing.fat_per_100 * amountInBase) / 100
+    totalUnsaturatedFat += (ing.unsaturated_fat_per_100 * amountInBase) / 100
+    totalSugar += (ing.sugar_per_100 * amountInBase) / 100
+  }
+
+  const totalWeight = customizedIngredients.reduce((sum, ing) => {
+    let amountInBase = ing.amount
+    if (ing.unit === 'pcs' && ing.weight_per_unit) {
+      amountInBase = ing.amount * ing.weight_per_unit
+    }
+    return sum + amountInBase
+  }, 0)
+
+  const cookedTotalWeight = totalWeight * (recipe.yield ?? 100) / 100
+
+  if (cookedTotalWeight === 0) {
+    return { kcal: 0, protein: 0, carbs: 0, fat: 0, unsaturated_fat: 0, sugar: 0 }
+  }
+
+  const scale = servingGrams / cookedTotalWeight
   const r = (n: number) => Math.round(n * 10) / 10
   return {
     kcal: r(totalKcal * scale),

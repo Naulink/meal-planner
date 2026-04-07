@@ -498,6 +498,223 @@ const docTemplate = `{
                 }
             }
         },
+        "/meal-plan/{id}/customize": {
+            "post": {
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meal-plan"
+                ],
+                "summary": "Snapshot recipe ingredients for customization",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Entry ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_api.MealPlanEntryIngredientResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/meal-plan/{id}/ingredients": {
+            "post": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meal-plan"
+                ],
+                "summary": "Add ingredient to a customized entry",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Entry ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Ingredient data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api.AddEntryIngredientRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_api.MealPlanEntryIngredientResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
+        "/meal-plan/{id}/ingredients/{ingredientId}": {
+            "put": {
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "meal-plan"
+                ],
+                "summary": "Update an override ingredient's amount and unit",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Entry ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Ingredient ID",
+                        "name": "ingredientId",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Update data",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_api.UpdateEntryIngredientRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/internal_api.MealPlanEntryIngredientResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "tags": [
+                    "meal-plan"
+                ],
+                "summary": "Remove an override ingredient",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Entry ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Ingredient ID",
+                        "name": "ingredientId",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "204": {
+                        "description": "No Content"
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/persons": {
             "get": {
                 "produces": [
@@ -1188,6 +1405,20 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "internal_api.AddEntryIngredientRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "ingredient_id": {
+                    "type": "integer"
+                },
+                "unit": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_api.CreateIngredientRequest": {
             "type": "object",
             "properties": {
@@ -1298,6 +1529,9 @@ const docTemplate = `{
                     "items": {
                         "type": "integer"
                     }
+                },
+                "yield": {
+                    "type": "number"
                 }
             }
         },
@@ -1400,6 +1634,53 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_api.MealPlanEntryIngredientResponse": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "carbs_per_100": {
+                    "type": "number"
+                },
+                "fat_per_100": {
+                    "type": "number"
+                },
+                "image_path": {
+                    "type": "string"
+                },
+                "ingredient_id": {
+                    "type": "integer"
+                },
+                "kcal_per_100": {
+                    "type": "number"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "nutrition_basis": {
+                    "type": "string"
+                },
+                "pieces_allowed": {
+                    "type": "boolean"
+                },
+                "protein_per_100": {
+                    "type": "number"
+                },
+                "sugar_per_100": {
+                    "type": "number"
+                },
+                "unit": {
+                    "type": "string"
+                },
+                "unsaturated_fat_per_100": {
+                    "type": "number"
+                },
+                "weight_per_unit": {
+                    "type": "integer"
+                }
+            }
+        },
         "internal_api.MealPlanEntryResponse": {
             "type": "object",
             "properties": {
@@ -1408,6 +1689,12 @@ const docTemplate = `{
                 },
                 "created_at": {
                     "type": "string"
+                },
+                "customized_ingredients": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/internal_api.MealPlanEntryIngredientResponse"
+                    }
                 },
                 "day_index": {
                     "type": "integer"
@@ -1577,6 +1864,9 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/internal_api.TagResponse"
                     }
+                },
+                "yield": {
+                    "type": "number"
                 }
             }
         },
@@ -1597,6 +1887,17 @@ const docTemplate = `{
                 },
                 "show_on_cards": {
                     "type": "boolean"
+                }
+            }
+        },
+        "internal_api.UpdateEntryIngredientRequest": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "number"
+                },
+                "unit": {
+                    "type": "string"
                 }
             }
         },

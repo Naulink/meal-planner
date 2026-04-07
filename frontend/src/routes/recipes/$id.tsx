@@ -113,8 +113,8 @@ function RecipeDetailPage() {
     return sum + base
   }, 0)
   const scale = persons / (recipe.persons ?? 1)
-  // Recipe page shows raw ingredient nutrition — yield only applies in the meal planner
-  const macros = calcServingMacros({ ...recipe, yield: 100 }, totalWeight * scale)
+  const cookedWeight = totalWeight * scale * (recipe.yield ?? 100) / 100
+  const macros = calcServingMacros(recipe, cookedWeight)
 
   // Parse steps
   const stepLines = recipe.steps
@@ -210,7 +210,7 @@ function RecipeDetailPage() {
                 <>
                   Yield: {recipe.yield}%
                   <span className="ml-1 text-muted-foreground">
-                    ({Math.round(totalWeight * scale)}g raw → {Math.round(totalWeight * scale * (recipe.yield ?? 100) / 100)}g cooked)
+                    ({Math.round(totalWeight * scale)}g raw → {Math.round(totalWeight * scale * (recipe.yield ?? 100) / 100 * 10) / 10}g cooked)
                   </span>
                 </>
               ) : (

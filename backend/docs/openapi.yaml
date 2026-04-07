@@ -335,6 +335,175 @@ paths:
       summary: Update a meal plan entry's serving grams or amount
       tags:
         - meal-plan
+  "/meal-plan/{id}/customize":
+    post:
+      parameters:
+        - description: Entry ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/internal_api.MealPlanEntryIngredientResponse"
+                type: array
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Snapshot recipe ingredients for customization
+      tags:
+        - meal-plan
+  "/meal-plan/{id}/ingredients":
+    post:
+      parameters:
+        - description: Entry ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/internal_api.AddEntryIngredientRequest"
+        description: Ingredient data
+        required: true
+      responses:
+        "201":
+          description: Created
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/internal_api.MealPlanEntryIngredientResponse"
+                type: array
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                type: string
+        "409":
+          description: Conflict
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Add ingredient to a customized entry
+      tags:
+        - meal-plan
+  "/meal-plan/{id}/ingredients/{ingredientId}":
+    delete:
+      parameters:
+        - description: Entry ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - description: Ingredient ID
+          in: path
+          name: ingredientId
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          content:
+            "*/*":
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            "*/*":
+              schema:
+                type: string
+      summary: Remove an override ingredient
+      tags:
+        - meal-plan
+    put:
+      parameters:
+        - description: Entry ID
+          in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+        - description: Ingredient ID
+          in: path
+          name: ingredientId
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/internal_api.UpdateEntryIngredientRequest"
+        description: Update data
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: "#/components/schemas/internal_api.MealPlanEntryIngredientResponse"
+                type: array
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                type: string
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                type: string
+      summary: Update an override ingredient's amount and unit
+      tags:
+        - meal-plan
   "/meal-plan/day/{dayIndex}":
     delete:
       parameters:
@@ -898,6 +1067,15 @@ components:
       description: Tag
       required: true
   schemas:
+    internal_api.AddEntryIngredientRequest:
+      properties:
+        amount:
+          type: number
+        ingredient_id:
+          type: integer
+        unit:
+          type: string
+      type: object
     internal_api.CreateIngredientRequest:
       properties:
         carbs_per_100:
@@ -971,6 +1149,8 @@ components:
           items:
             type: integer
           type: array
+        yield:
+          type: number
       type: object
     internal_api.CreateTagRequest:
       properties:
@@ -1037,12 +1217,47 @@ components:
         weight_per_unit:
           type: integer
       type: object
+    internal_api.MealPlanEntryIngredientResponse:
+      properties:
+        amount:
+          type: number
+        carbs_per_100:
+          type: number
+        fat_per_100:
+          type: number
+        image_path:
+          type: string
+        ingredient_id:
+          type: integer
+        kcal_per_100:
+          type: number
+        name:
+          type: string
+        nutrition_basis:
+          type: string
+        pieces_allowed:
+          type: boolean
+        protein_per_100:
+          type: number
+        sugar_per_100:
+          type: number
+        unit:
+          type: string
+        unsaturated_fat_per_100:
+          type: number
+        weight_per_unit:
+          type: integer
+      type: object
     internal_api.MealPlanEntryResponse:
       properties:
         amount:
           type: number
         created_at:
           type: string
+        customized_ingredients:
+          items:
+            $ref: "#/components/schemas/internal_api.MealPlanEntryIngredientResponse"
+          type: array
         day_index:
           type: integer
         id:
@@ -1154,6 +1369,8 @@ components:
           items:
             $ref: "#/components/schemas/internal_api.TagResponse"
           type: array
+        yield:
+          type: number
       type: object
     internal_api.TagResponse:
       properties:
@@ -1167,6 +1384,13 @@ components:
           type: string
         show_on_cards:
           type: boolean
+      type: object
+    internal_api.UpdateEntryIngredientRequest:
+      properties:
+        amount:
+          type: number
+        unit:
+          type: string
       type: object
     internal_api.UpdateMealPlanEntryRequest:
       properties:

@@ -107,6 +107,10 @@ func main() {
 	mux.HandleFunc("DELETE /meal-plan/day/{dayIndex}", handler.DeleteMealPlanDay)
 	mux.HandleFunc("PUT /meal-plan/{id}", handler.UpdateMealPlanEntry)
 	mux.HandleFunc("DELETE /meal-plan/{id}", handler.DeleteMealPlanEntry)
+	mux.HandleFunc("POST /meal-plan/{id}/customize", handler.CustomizeMealPlanEntry)
+	mux.HandleFunc("POST /meal-plan/{id}/ingredients", handler.AddEntryIngredient)
+	mux.HandleFunc("PUT /meal-plan/{id}/ingredients/{ingredientId}", handler.UpdateEntryIngredient)
+	mux.HandleFunc("DELETE /meal-plan/{id}/ingredients/{ingredientId}", handler.DeleteEntryIngredient)
 
 	mux.HandleFunc("GET /tags", handler.ListTags)
 	mux.HandleFunc("POST /tags", handler.CreateTag)

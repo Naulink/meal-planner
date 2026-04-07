@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react'
 import { toast } from 'sonner'
 import { apiFetch } from '@/lib/api'
-import type { MealPlanEntry, CreateMealPlanEntryPayload } from '@/types'
+import type { MealPlanEntry, MealPlanEntryIngredient, CreateMealPlanEntryPayload } from '@/types'
 
 export function useMealPlan() {
   const [entries, setEntries] = useState<MealPlanEntry[]>([])
@@ -76,5 +76,86 @@ export function useMealPlan() {
     setEntries([])
   }, [])
 
-  return { entries, loading, error, fetchEntries, addEntry, updateEntry, removeEntry, removeDay, resetAll }
+  const customizeEntry = useCallback(async (id: number): Promise<MealPlanEntryIngredient[]> => {
+    const ingredients = await apiFetch<MealPlanEntryIngredient[]>(`/meal-plan/${id}/customize`, {
+      method: 'POST',
+    })
+    setEntries(prev => prev.map(e =>
+      e.id === id ? { ...e, customized_ingredients: ingredients } : e
+    ))
+    return ingredients
+  }, [])
+
+  const addEntryIngredient = useCallback(async (
+    entryId: number,
+    data: { ingredient_id: number; amount: number; unit: string }
+  ): Promise<void> => {
+    const ingredients = await apiFetch<MealPlanEntryIngredient[]>(`/meal-plan/${entryId}/ingredients`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    })
+    setEntries(prev => prev.map(e =>
+      e.id === entryId ? { ...e, customized_ingredients: ingredients } : e
+    ))
+  }, [])
+
+  const updateEntryIngredient = useCallback(async (
+    entryId: number,
+    ingredientId: number,
+    data: { amount: number; unit: string }
+  ): Promise<void> => {
+    // Optimistic update
+    setEntries(prev => prev.map(e => {
+      if (e.id !== entryId || !e.customized_ingredients) return e
+      return {
+        ...e,
+        customized_ingredients: e.customized_ingredients.map(ci =>
+          ci.ingredient_id === ingredientId ? { ...ci, ...data } : ci
+        ),
+      }
+    }))
+    try {
+      const ingredients = await apiFetch<MealPlanEntryIngredient[]>(
+        `/meal-plan/${entryId}/ingredients/${ingredientId}`,
+        { method: 'PUT', body: JSON.stringify(data) }
+      )
+      setEntries(prev => prev.map(e =>
+        e.id === entryId ? { ...e, customized_ingredients: ingredients } : e
+      ))
+    } catch (err) {
+      // Revert on failure
+      toast.error(err instanceof Error ? err.message : 'Failed to update ingredient')
+      const all = await apiFetch<MealPlanEntry[]>('/meal-plan')
+      setEntries(all)
+    }
+  }, [])
+
+  const removeEntryIngredient = useCallback(async (
+    entryId: number,
+    ingredientId: number
+  ): Promise<void> => {
+    // Optimistic removal
+    setEntries(prev => prev.map(e => {
+      if (e.id !== entryId || !e.customized_ingredients) return e
+      const remaining = e.customized_ingredients.filter(ci => ci.ingredient_id !== ingredientId)
+      return {
+        ...e,
+        customized_ingredients: remaining.length > 0 ? remaining : undefined,
+      }
+    }))
+    try {
+      await apiFetch<void>(`/meal-plan/${entryId}/ingredients/${ingredientId}`, {
+        method: 'DELETE',
+      })
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Failed to remove ingredient')
+      const all = await apiFetch<MealPlanEntry[]>('/meal-plan')
+      setEntries(all)
+    }
+  }, [])
+
+  return {
+    entries, loading, error, fetchEntries, addEntry, updateEntry, removeEntry, removeDay, resetAll,
+    customizeEntry, addEntryIngredient, updateEntryIngredient, removeEntryIngredient,
+  }
 }

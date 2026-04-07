@@ -42,6 +42,13 @@ type MealPlanEntry struct {
 	Unit         *string
 }
 
+type MealPlanEntryIngredient struct {
+	MealPlanEntryID int64
+	IngredientID    int64
+	Amount          float64
+	Unit            string
+}
+
 type Person struct {
 	ID        int64
 	Name      string
